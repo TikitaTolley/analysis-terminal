@@ -1,148 +1,74 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import cloudflareLogo from './assets/cloudflare.svg'
-import heroImg from './assets/hero.png'
+import { useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
+import Simulator from './Simulator'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
-  const [name, setName] = useState('unknown')
-
+function Entry() {
+  const [playerId, setPlayerId] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState('')
+  const [version, setVersion] = useState<string | null>(null)
+  const [received, setReceived] = useState(false)
+  useEffect(() => {
+    if (!version || received) return
+    let stopped = false
+    let timer: ReturnType<typeof setTimeout>
+    const check = async () => {
+      let delay = 3000
+      try {
+        const response = await fetch(`/api/status?version=${encodeURIComponent(version)}`, { signal: AbortSignal.timeout(10000) })
+        if (response.status === 429) { delay = 60000; throw new Error() }
+        if (!response.ok) throw new Error()
+        const data = await response.json()
+        if (stopped) return
+        if (data.status === 'received') { setMessage('Received by terminal.'); setReceived(true); return }
+        if (data.status === 'completed') { setMessage('Session finished. Send your ID to view again.'); return }
+        if (data.status === 'expired' || data.status === 'replaced') {
+          setMessage(data.status === 'expired' ? 'Selection expired. Send your ID again.' : 'Another player has selected a team.'); return
+        }
+        setMessage('Sent. Waiting for terminal...')
+      } catch { if (!stopped) setMessage('Sent. Reconnecting to check delivery...') }
+      if (!stopped) timer = setTimeout(check, delay)
+    }
+    void check()
+    return () => { stopped = true; clearTimeout(timer) }
+  }, [version, received])
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (busy) return
+    setBusy(true); setVersion(null); setReceived(false); setMessage('Finding team...')
+    try {
+      const response = await fetch('/api/selection', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId: playerId.trim() }), signal: AbortSignal.timeout(15000),
+      })
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error ?? 'Could not send this ID.')
+      setVersion(data.version); setMessage('Sent. Waiting for terminal...')
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Connection failed. Try again.') }
+    finally { setBusy(false) }
+  }
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <main className="terminal">
+      <header className="masthead"><span className="ministry">Ministry of Artificial</span><span className="unit">Classified information</span></header>
+      <section className="console" aria-labelledby="title">
+        <div className="console-bar"><span>THINK TO INK</span><span>ANALYSIS DIVISION</span></div>
+        <div className="console-body">
+          <h1 id="title">Analysis terminal</h1>
+          <form className="player-entry" onSubmit={submit}>
+            <label htmlFor="player-id">Player ID</label>
+            <input id="player-id" name="playerId" type="text" inputMode="numeric" pattern="[1-9][0-9]{0,9}" required placeholder="Enter your player ID" autoComplete="off" spellCheck={false} maxLength={10} value={playerId} onChange={event => setPlayerId(event.target.value)} />
+            <button type="submit" disabled={busy}>{busy ? 'Sending...' : 'View on terminal'}</button>
+            <p className="delivery" role="status">{message}</p>
+          </form>
         </div>
-        <div>
-          <h1>Get started with Cloudflare</h1>
-          <p>
-            Edit <code>src/App.tsx</code> or <code>worker/index.ts</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <ul style={{ display: 'flex', gap: '1rem', listStyle: 'none', padding: 0 }}>
-          <li>
-            <button
-              className="counter"
-              onClick={() => setCount((count) => count + 1)}
-            >
-              Count is {count}
-            </button>
-          </li>
-          <li>
-          <button
-            className="counter"
-            onClick={() => {
-              fetch('/api/')
-                .then((res) => res.json())
-                .then((data) => setName(data.name))
-            }}
-            aria-label='get name'
-          >
-            Name from API is: {name}
-          </button>
-          </li>
-        </ul>
-
-
+        <footer className="console-footer"><span>WEB ACCESS / READY</span><span className="warning">{received ? 'DELIVERY / RECEIVED' : 'CLASSIFIED / TEAM RECORDS'}</span></footer>
       </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-            <li>
-              <a href="https://workers.cloudflare.com/" target="_blank">
-                <img className="button-icon" src={cloudflareLogo} alt="" />
-                Workers Docs
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      <footer className="credits"><span>Hardware by TikitaTech</span><span>Think to Ink by Leon Brown</span></footer>
+    </main>
   )
 }
-
-export default App
+export default function App() {
+  const local = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+  return local && window.location.pathname === '/simulator' ? <Simulator /> : <Entry />
+}

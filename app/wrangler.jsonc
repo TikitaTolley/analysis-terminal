@@ -1,40 +1,56 @@
-/**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "app",
-	"main": "worker/index.ts",
-	"compatibility_date": "2026-09-07",
-	"assets": {
-		"not_found_handling": "single-page-application"
-	},
-	"observability": {
-		"enabled": true
-	},
-	"upload_source_maps": true
-	/**
-	 * Smart Placement
-	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
-	 */
-	// "placement": {  "mode": "smart" }
-	/**
-	 * Bindings
-	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
-	 * databases, object storage, AI inference, real-time communication and more.
-	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
-	 */
-	/**
-	 * Environment Variables
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
-	 * Note: Use secrets to store sensitive data.
-	 * https://developers.cloudflare.com/workers/configuration/secrets/
-	 */
-	// "vars": {  "MY_VARIABLE": "production_value" }
-	/**
-	 * Service Bindings (communicate between multiple Workers)
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
-	 */
-	// "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "analysis-terminal",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-09-07",
+  "assets": {
+    "not_found_handling": "single-page-application",
+    "run_worker_first": [
+      "/api/*"
+    ]
+  },
+  "vars": {
+    "LEAGUE_ID": "1"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "analysis-terminal",
+      "database_id": "559627ae-675f-4bb0-97c8-5a7d6f7ec614"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "SUBMIT_LIMIT",
+      "namespace_id": "2001",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    },
+    {
+      "name": "STATUS_LIMIT",
+      "namespace_id": "2002",
+      "simple": {
+        "limit": 120,
+        "period": 60
+      }
+    },
+    {
+      "name": "DEVICE_POLL_LIMIT",
+      "namespace_id": "2003",
+      "simple": {
+        "limit": 40,
+        "period": 60
+      }
+    },
+    {
+      "name": "DEVICE_COMMAND_LIMIT",
+      "namespace_id": "2004",
+      "simple": {
+        "limit": 10,
+        "period": 60
+      }
+    }
+  ]
 }

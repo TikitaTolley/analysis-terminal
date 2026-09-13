@@ -1,0 +1,60 @@
+{
+  "status": "success",
+  "timestamp": 1789234423,
+  "leaderboard": [
+    {
+      "id": 2,
+      "name": "Neon Knights",
+      "score": 1240,
+      "games_played": 12
+    },
+    {
+      "id": 3,
+      "name": "Copper Comets",
+      "score": 980,
+      "games_played": 12
+    },
+    {
+      "id": 1,
+      "name": "Demo Team",
+      "score": 850,
+      "games_played": 12
+    },
+    {
+      "id": 4,
+      "name": "Pixel Patrol",
+      "score": 720,
+      "games_played": 12
+    },
+    {
+      "id": 5,
+      "name": "Blue Circuit",
+      "score": 610,
+      "games_played": 12
+    },
+    {
+      "id": 6,
+      "name": "Orange Orbit",
+      "score": 480,
+      "games_played": 12
+    },
+    {
+      "id": 7,
+      "name": "Signal Squad",
+      "score": 350,
+      "games_played": 12
+    },
+    {
+      "id": 8,
+      "name": "Byte Brigade",
+      "score": 220,
+      "games_played": 12
+    },
+    {
+      "id": 9,
+      "name": "Cobalt Crew",
+      "score": 90,
+      "games_played": 12
+    }
+  ]
+}

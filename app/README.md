@@ -1,75 +1,72 @@
-# React + TypeScript + Vite
+# Companion app
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + Vite frontend, Cloudflare Worker API and D1 session storage. [Open the companion](https://analysis-terminal.daeda-technologies.workers.dev/).
 
-Currently, two official plugins are available:
+## Local setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+From this repository's root, with Bun installed:
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```sh
+cd app
+bun install
+cp .dev.vars.example .dev.vars
+bunx wrangler d1 migrations apply analysis-terminal --local
+bun run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+Set `DEVICE_KEY` in `.dev.vars` to your own random secret. Keep it out of Git.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Deploy your own
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+1. Run `bunx wrangler login`, then `bunx wrangler d1 create analysis-terminal` in your Cloudflare account.
+2. In [wrangler.jsonc](wrangler.jsonc), set your Worker name and the returned database ID. Keep the binding `DB`.
+3. Set `LEAGUE_ID` to the league you want to display. The supplied value `1` is the game's test league.
+4. Apply the database migration and store the same device key used by your ESP32:
 
+```sh
+bunx wrangler d1 migrations apply analysis-terminal --remote
+bunx wrangler secret put DEVICE_KEY
+bun run deploy
+```
+
+Set the firmware's `API_URL` to your deployed Worker URL. Use the companion URL for the NFC sticker.
+
+[Cloudflare database setup](https://developers.cloudflare.com/d1/get-started/) · [Worker secrets](https://developers.cloudflare.com/workers/configuration/secrets/)
+
+## Computer-only simulator
+
+Set `origin` in [scripts/simulator.ts](scripts/simulator.ts) to your deployed Worker URL. Use its matching device key in `.dev.vars`.
+
+```sh
+bun run build
+bun --env-file=.dev.vars scripts/simulator.ts
+```
+
+Open [localhost:4174/simulator](http://127.0.0.1:4174/simulator). Stop the simulator before connecting the physical terminal: it uses the same device slot.
+
+## API
+
+| Endpoint | Purpose |
+| --- | --- |
+| `POST /api/selection` | Submit `{ "playerId": "1" }` |
+| `GET /api/status?version=...` | Phone delivery status |
+| `GET /api/device` | Device selection and display data |
+| `POST /api/device/ack` | Confirm the displayed `version` |
+| `POST /api/device/reset` | Finish the current `version` |
+
+Device routes require `Authorization: Bearer <DEVICE_KEY>`. The phone never receives this key. Game data is read-only.
+
+## Sessions
+
+- One active team at a time, with a 15-minute expiry.
+- Device polling runs every three seconds; game data refreshes at most once a minute.
+- Missing data stays N/A. Idle demo values are fictional.
+- If a refresh fails, the last snapshot remains with a connection warning.
+
+## Checks
+
+```sh
+bun run build
+bun run lint
+bun test tests
 ```
