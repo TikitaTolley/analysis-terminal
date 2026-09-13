@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "generatedAt": "2026-09-12T19:33:42+02:00",
+  "game": {
+    "id": "game-none",
+    "status": "unknown",
+    "startedAt": "2026-09-12T19:33:42+02:00",
+    "finishedAt": "2026-09-12T19:33:42+02:00",
+    "winningTeamId": null,
+    "finalStage": {
+      "name": "simulation",
+      "summary": "No active match history found.",
+      "state": {}
+    }
+  },
+  "player": {
+    "id": "1",
+    "displayName": "Captain Demo"
+  },
+  "team": {
+    "id": "1",
+    "name": "Demo Team",
+    "score": 850,
+    "rank": 3,
+    "gamesPlayed": 12,
+    "gamesWon": 8,
+    "stats": {}
+  },
+  "agents": [],
+  "result": {
+    "outcome": "none",
+    "score": 850,
+    "rank": 3,
+    "summary": "Demo Team has 850 points after 12 games, with 8 wins."
+  }
+}
