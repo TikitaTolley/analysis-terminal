@@ -92,6 +92,10 @@ The finished base uses 66.69 g of black PETG and the lid uses 22.36 g of grey PE
   <a href="media/terminal-controls.webp"><img src="media/terminal-controls.webp" alt="Analysis Terminal blue, white and red buttons on their separate board" height="180"></a>
 </p>
 
+## Build videos
+
+- [Prototype to finished build](https://www.youtube.com/shorts/9iwrt5BVat8)
+
 ## This project elsewhere
 
 | Where | Link |
